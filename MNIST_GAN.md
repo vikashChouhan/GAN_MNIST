@@ -117,7 +117,7 @@ ax.imshow(img, cmap='gray')
 
 
 
-![png](notebook markdown/output_4_1.png)
+![png](notebook_markdown/output_4_1.png)
 
 
 ---
@@ -663,7 +663,7 @@ view_samples(-1, samples)
 ```
 
 
-![png](notebook markdown/output_26_0.png)
+![png](notebook_markdown/output_26_0.png)
 
 
 Below I'm showing the generated images as the network was training, every 10 epochs.
@@ -683,7 +683,7 @@ for sample, ax_row in zip(samples[::int(len(samples)/rows)], axes):
 ```
 
 
-![png](notebook markdown/output_28_0.png)
+![png](notebook_markdown/output_28_0.png)
 
 
 It starts out as all noise. Then it learns to make only the center white and the rest black. You can start to see some number like structures appear out of the noise like 1s and 9s.
@@ -709,4 +709,4 @@ view_samples(0, [rand_images])
 ```
 
 
-![png](notebook markdown/output_31_0.png)
+![png](notebook_markdown/output_31_0.png)
