@@ -628,7 +628,7 @@ plt.legend()
 
 
 
-![png](notebook markdown/output_21_1.png)
+![png](notebook_markdown/output_21_1.png)
 
 
 ## Generator samples from training
