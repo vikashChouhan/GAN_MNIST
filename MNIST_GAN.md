@@ -5,13 +5,13 @@ In this notebook, we'll be building a generative adversarial network (GAN) train
 
 GANs were [first reported on](https://arxiv.org/abs/1406.2661) in 2014 from Ian Goodfellow and others in Yoshua Bengio's lab. Since then, GANs have exploded in popularity. Here are a few examples to check out:
 
-* [Pix2Pix](https://affinelayer.com/pixsrv/) 
+* [Pix2Pix](https://affinelayer.com/pixsrv/)
 * [CycleGAN & Pix2Pix in PyTorch, Jun-Yan Zhu](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix)
 * [A list of generative models](https://github.com/wiseodd/generative-models)
 
-The idea behind GANs is that we have two networks, a generator $G$ and a discriminator $D$, competing against each other. The generator makes "fake" data to pass to the discriminator. The discriminator also sees real training data and predicts if the data it's received is real or fake. 
-> * The generator is trained to fool the discriminator, it wants to output data that looks _as close as possible_ to real, training data. 
-* The discriminator is a classifier that is trained to figure out which data is real and which is fake. 
+The idea behind GANs is that we have two networks, a generator $G$ and a discriminator $D$, competing against each other. The generator makes "fake" data to pass to the discriminator. The discriminator also sees real training data and predicts if the data it's received is real or fake.
+> * The generator is trained to fool the discriminator, it wants to output data that looks _as close as possible_ to real, training data.
+* The discriminator is a classifier that is trained to figure out which data is real and which is fake.
 
 What ends up happening is that the generator learns to make data that is indistinguishable from real data to the discriminator.
 
@@ -55,42 +55,42 @@ train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size,
     0it [00:00, ?it/s]
 
     Downloading http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz to data/MNIST/raw/train-images-idx3-ubyte.gz
-    
+
 
     9920512it [00:02, 3611383.29it/s]                             
-    
+
 
     Extracting data/MNIST/raw/train-images-idx3-ubyte.gz
-    
+
 
     0it [00:00, ?it/s]
 
     Downloading http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz to data/MNIST/raw/train-labels-idx1-ubyte.gz
-    
+
 
     32768it [00:00, 57220.93it/s]                           
     0it [00:00, ?it/s]
 
     Extracting data/MNIST/raw/train-labels-idx1-ubyte.gz
     Downloading http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz to data/MNIST/raw/t10k-images-idx3-ubyte.gz
-    
+
 
     1654784it [00:01, 955293.55it/s]                            
     0it [00:00, ?it/s]
 
     Extracting data/MNIST/raw/t10k-images-idx3-ubyte.gz
     Downloading http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz to data/MNIST/raw/t10k-labels-idx1-ubyte.gz
-    
+
 
     8192it [00:00, 21549.78it/s]            
 
     Extracting data/MNIST/raw/t10k-labels-idx1-ubyte.gz
     Processing...
     Done!
-    
 
-    
-    
+
+
+
 
 ### Visualize the data
 
@@ -104,7 +104,7 @@ images = images.numpy()
 # get one image from the batch
 img = np.squeeze(images[0])
 
-fig = plt.figure(figsize = (3,3)) 
+fig = plt.figure(figsize = (3,3))
 ax = fig.add_subplot(111)
 ax.imshow(img, cmap='gray')
 ```
@@ -117,7 +117,7 @@ ax.imshow(img, cmap='gray')
 
 
 
-![png](output_4_1.png)
+![png](notebook markdown/output_4_1.png)
 
 
 ---
@@ -140,8 +140,8 @@ We should use a leaky ReLU to allow gradients to flow backwards through the laye
 
 #### Sigmoid Output
 
-We'll also take the approach of using a more numerically stable loss function on the outputs. Recall that we want the discriminator to output a value 0-1 indicating whether an image is _real or fake_. 
-> We will ultimately use [BCEWithLogitsLoss](https://pytorch.org/docs/stable/nn.html#bcewithlogitsloss), which combines a `sigmoid` activation function **and** and binary cross entropy loss in one function. 
+We'll also take the approach of using a more numerically stable loss function on the outputs. Recall that we want the discriminator to output a value 0-1 indicating whether an image is _real or fake_.
+> We will ultimately use [BCEWithLogitsLoss](https://pytorch.org/docs/stable/nn.html#bcewithlogitsloss), which combines a `sigmoid` activation function **and** and binary cross entropy loss in one function.
 
 So, our final output layer should not have any activation function applied to it.
 
@@ -154,19 +154,19 @@ class Discriminator(nn.Module):
 
     def __init__(self, input_size, hidden_dim, output_size):
         super(Discriminator, self).__init__()
-        
+
         # define hidden linear layers
         self.fc1 = nn.Linear(input_size, hidden_dim*4)
         self.fc2 = nn.Linear(hidden_dim*4, hidden_dim*2)
         self.fc3 = nn.Linear(hidden_dim*2, hidden_dim)
-        
+
         # final fully-connected layer
         self.fc4 = nn.Linear(hidden_dim, output_size)
-        
-        # dropout layer 
+
+        # dropout layer
         self.dropout = nn.Dropout(0.3)
-        
-        
+
+
     def forward(self, x):
         # flatten image
         x = x.view(-1, 28*28)
@@ -191,19 +191,19 @@ class Discriminator(nn.Module):
       (drp): Dropout(p=0.5)
       (LRelu): LeakyReLU(negative_slope=0.2)
     )
-    
+
 
 ## Generator
 
 The generator network will be almost exactly the same as the discriminator network, except that we're applying a [tanh activation function](https://pytorch.org/docs/stable/nn.html#tanh) to our output layer.
 
 #### tanh Output
-The generator has been found to perform the best with $tanh$ for the generator output, which scales the output to be between -1 and 1, instead of 0 and 1. 
+The generator has been found to perform the best with $tanh$ for the generator output, which scales the output to be between -1 and 1, instead of 0 and 1.
 
 <img src='assets/tanh_fn.png' width=40% />
 
-Recall that we also want these outputs to be comparable to the *real* input pixel values, which are read in as normalized values between 0 and 1. 
-> So, we'll also have to **scale our real input images to have pixel values between -1 and 1** when we train the discriminator. 
+Recall that we also want these outputs to be comparable to the *real* input pixel values, which are read in as normalized values between 0 and 1.
+> So, we'll also have to **scale our real input images to have pixel values between -1 and 1** when we train the discriminator.
 
 we'll do this in the training loop, later on.
 
@@ -213,16 +213,16 @@ class Generator(nn.Module):
 
     def __init__(self, input_size, hidden_dim, output_size):
         super(Generator, self).__init__()
-        
+
         # define hidden linear layers
         self.fc1 = nn.Linear(input_size, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim*2)
         self.fc3 = nn.Linear(hidden_dim*2, hidden_dim*4)
-        
+
         # final fully-connected layer
         self.fc4 = nn.Linear(hidden_dim*4, output_size)
-        
-        # dropout layer 
+
+        # dropout layer
         self.dropout = nn.Dropout(0.3)
 
     def forward(self, x):
@@ -264,7 +264,7 @@ g_hidden_size = 32
 
 ## Build complete network
 
-Now we're instantiating the discriminator and generator from the classes defined above. 
+Now we're instantiating the discriminator and generator from the classes defined above.
 
 
 ```python
@@ -285,7 +285,7 @@ print(G)
       (drp): Dropout(p=0.5)
       (LRelu): LeakyReLU(negative_slope=0.2)
     )
-    
+
     Generator(
       (fc1): Linear(in_features=100, out_features=128, bias=True)
       (fc2): Linear(in_features=128, out_features=64, bias=True)
@@ -294,16 +294,16 @@ print(G)
       (tanh): Tanh()
       (drp): Dropout(p=0.5)
     )
-    
+
 
 ---
 ## Discriminator and Generator Losses
 
-Now we need to calculate the losses. 
+Now we need to calculate the losses.
 
 ### Discriminator Losses
 
-> * For the discriminator, the total loss is the sum of the losses for real and fake images, `d_loss = d_real_loss + d_fake_loss`. 
+> * For the discriminator, the total loss is the sum of the losses for real and fake images, `d_loss = d_real_loss + d_fake_loss`.
 * Remember that we want the discriminator to output 1 for real images and 0 for fake images, so we need to set up the losses to reflect that.
 
 <img src='assets/gan_pipeline.png' width=70% />
@@ -312,7 +312,7 @@ The losses will by binary cross entropy loss with logits, which we can get with 
 
 For the real images, we want `D(real_images) = 1`. That is, we want the discriminator to classify the the real images with a label = 1, indicating that these are real. To help the discriminator generalize better, the labels are **reduced a bit from 1.0 to 0.9**. For this, we'll use the parameter `smooth`; if True, then we should smooth our labels. In PyTorch, this looks like `labels = torch.ones(size) * 0.9`
 
-The discriminator loss for the fake data is similar. We want `D(fake_images) = 0`, where the fake images are the _generator output_, `fake_images = G(z)`. 
+The discriminator loss for the fake data is similar. We want `D(fake_images) = 0`, where the fake images are the _generator output_, `fake_images = G(z)`.
 
 ### Generator Loss
 
@@ -325,10 +325,10 @@ def real_loss(D_out, smooth=False):
     # compare logits to real labels
     # smooth labels if smooth=True
     target = torch.ones(D_out.size(0))
-    
+
     if(smooth):
       target*=0.9
-      
+
     criterian = nn.BCEWithLogitsLoss()
     loss = criterian(D_out.squeeze(),target)
     return loss
@@ -401,65 +401,65 @@ fixed_z = torch.from_numpy(fixed_z).float()
 D.train()
 G.train()
 for epoch in range(num_epochs):
-    
+
     for batch_i, (real_images, _) in enumerate(train_loader):
-                
+
         batch_size = real_images.size(0)
-        
-        ## Important rescaling step ## 
+
+        ## Important rescaling step ##
         real_images = real_images*2 - 1  # rescale input images from [0,1) to [-1, 1)
-        
+
         # ============================================
         #            TRAIN THE DISCRIMINATOR
         # ============================================
-                
+
         # 1. Train with real images
 
         # Compute the discriminator losses on real images
         # use smoothed labels
         d_optimizer.zero_grad()
         D_out = D(real_images)
-        realLoss = real_loss(D_out,smooth=True) 
+        realLoss = real_loss(D_out,smooth=True)
         # 2. Train with fake images
-        
+
         # Generate fake images
         z = np.random.uniform(-1, 1, size=(batch_size, z_size))
         z = torch.from_numpy(z).float()
         fake_images = G(z)
-        
-        # Compute the discriminator losses on fake images 
+
+        # Compute the discriminator losses on fake images
         D_fake_out = D(fake_images)
         fakeLoss = fake_loss(D_fake_out)
         # add up real and fake losses and perform backprop
         d_loss = realLoss + fakeLoss
-        
-        
+
+
         d_loss.backward()
         d_optimizer.step()
-        
-        
+
+
         # =========================================
         #            TRAIN THE GENERATOR
         # =========================================
-        
+
         # 1. Train with fake images and flipped labels
         g_optimizer.zero_grad()
-        
+
         # Generate fake images
         z = np.random.uniform(-1, 1, size=(batch_size, z_size))
         z = torch.from_numpy(z).float()
         fake_images = G(z)
-        # Compute the discriminator losses on fake images 
+        # Compute the discriminator losses on fake images
         # using flipped labels!
-        
+
         # perform backprop
-        
+
         D_fake_images = D(fake_images)
         g_loss = real_loss(D_fake_images)
-        
+
         g_loss.backward()
         g_optimizer.step()
-        
+
 
         # Print some loss stats
         if batch_i % print_every == 0:
@@ -467,11 +467,11 @@ for epoch in range(num_epochs):
             print('Epoch [{:5d}/{:5d}] | d_loss: {:6.4f} | g_loss: {:6.4f}'.format(
                     epoch+1, num_epochs, d_loss.item(), g_loss.item()))
 
-    
+
     ## AFTER EACH EPOCH##
     # append discriminator loss and generator loss
     losses.append((d_loss.item(), g_loss.item()))
-    
+
     # generate and save sample, fake images
     G.eval() # eval mode for generating samples
     samples_z = G(fixed_z)
@@ -604,7 +604,7 @@ with open('train_samples.pkl', 'wb') as f:
     Epoch [   40/   40] | d_loss: 1.3593 | g_loss: 1.0093
     Epoch [   40/   40] | d_loss: 1.2971 | g_loss: 0.9693
     Epoch [   40/   40] | d_loss: 1.3575 | g_loss: 0.8578
-    
+
 
 ## Training loss
 
@@ -628,7 +628,7 @@ plt.legend()
 
 
 
-![png](output_21_1.png)
+![png](notebook markdown/output_21_1.png)
 
 
 ## Generator samples from training
@@ -663,7 +663,7 @@ view_samples(-1, samples)
 ```
 
 
-![png](output_26_0.png)
+![png](notebook markdown/output_26_0.png)
 
 
 Below I'm showing the generated images as the network was training, every 10 epochs.
@@ -683,7 +683,7 @@ for sample, ax_row in zip(samples[::int(len(samples)/rows)], axes):
 ```
 
 
-![png](output_28_0.png)
+![png](notebook markdown/output_28_0.png)
 
 
 It starts out as all noise. Then it learns to make only the center white and the rest black. You can start to see some number like structures appear out of the noise like 1s and 9s.
@@ -709,5 +709,4 @@ view_samples(0, [rand_images])
 ```
 
 
-![png](output_31_0.png)
-
+![png](notebook markdown/output_31_0.png)
